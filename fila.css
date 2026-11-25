@@ -1,0 +1,38 @@
+/* Fila Bon Vivant — identidade: preto e branco da marca, vinho como único acento */
+@font-face{font-family:"Adriane";src:url("fontes/adriane-regular.ttf") format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Adriane";src:url("fontes/adriane-bold.ttf") format("truetype");font-weight:700;font-display:swap}
+@font-face{font-family:"Adriane";src:url("fontes/adriane-italic.ttf") format("truetype");font-weight:400;font-style:italic;font-display:swap}
+@font-face{font-family:"Fengardo";src:url("fontes/fengardo-regular.otf") format("opentype");font-weight:400;font-display:swap}
+@font-face{font-family:"Fengardo";src:url("fontes/fengardo-black.otf") format("opentype");font-weight:900;font-display:swap}
+
+:root{
+  --bg:#f4f4f2; --surface:#ffffff; --ink:#232321; --muted:#6b6a66; --line:#dcdbd6;
+  --vinho:#7b2333; --vinho-fg:#ffffff; --vinho-soft:#f5e6e8;
+  --aviso:#8a5300; --aviso-soft:#fbf0dc; --ok:#256b3c; --ok-soft:#e3f1e7; --erro:#b42318;
+  --wa:#128c4a;
+  --f-marca:"Adriane",Georgia,"Times New Roman",serif;
+  --f-texto:"Fengardo",-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#161615; --surface:#20201e; --ink:#eeede9; --muted:#a3a29c; --line:#34332f;
+  --vinho:#d77b8b; --vinho-fg:#1a0b0e; --vinho-soft:#3a2026;
+  --aviso:#f2b660; --aviso-soft:#3a2c14; --ok:#80d39c; --ok-soft:#1c3324; --erro:#ff8a80;
+  --wa:#3fcf7f; color-scheme:dark}}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-texto);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+button,.btn{font:inherit;font-weight:900;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  padding:12px 16px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;touch-action:manipulation}
+button:disabled{opacity:.5;cursor:default}
+button:focus-visible,.btn:focus-visible,input:focus-visible{outline:3px solid var(--vinho);outline-offset:2px}
+.b-principal{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.b-wa{background:var(--wa);border-color:var(--wa);color:#fff}
+.b-peq{padding:8px 12px;font-size:.88rem}
+label{display:flex;flex-direction:column;gap:5px;font-size:.85rem;color:var(--muted)}
+input{font:inherit;font-size:1.1rem;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;width:100%}
+.erro{color:var(--erro);margin:0;min-height:1.3em;font-size:.92rem}
+.num{font-family:var(--f-marca);font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.demo{background:var(--aviso-soft);color:var(--aviso);font-size:.82rem;text-align:center;padding:6px 12px}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Cartaz QR · Fila Bon Vivant</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="fila.css">
+<style>
+body{background:#e9e8e4;color:#232321}
+.barra{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:16px}
+.folha{background:#fff;color:#232321;width:148mm;min-height:210mm;margin:0 auto 32px;padding:14mm 12mm;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:8mm;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.folha img{width:40mm}
+.folha h1{font-family:var(--f-marca);font-weight:700;font-size:26pt;line-height:1.15;margin:0;text-wrap:balance}
+#qr{width:80mm;height:80mm}
+#qr canvas,#qr img{width:100%!important;height:100%!important}
+.passos{display:flex;flex-direction:column;gap:2mm;font-size:13pt;text-align:left}
+.passos b{font-family:var(--f-marca);font-size:15pt;margin-right:2mm}
+.url{font-size:9pt;color:#6b6a66;word-break:break-all}
+@media print{
+  @page{size:A5;margin:0}
+  body{background:#fff}.barra{display:none}
+  .folha{box-shadow:none;margin:0;width:148mm;height:210mm}
+}
+@media (max-width:600px){.folha{width:100%;min-height:auto;padding:24px 16px}}
+</style>
+</head>
+<body>
+<div class="barra">
+  <button class="b-principal" onclick="print()">Imprimir cartaz (A5)</button>
+</div>
+<div class="folha">
+  <img src="logo.png" alt="Bon Vivant em casa">
+  <h1>Avisamos no seu WhatsApp quando a sua vez estiver chegando</h1>
+  <div id="qr"></div>
+  <div class="passos">
+    <div><b>1</b>Pegue a sua senha de papel</div>
+    <div><b>2</b>Aponte a câmera do celular para o código</div>
+    <div><b>3</b>Digite a senha e o seu WhatsApp</div>
+  </div>
+  <div class="url" id="url"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<script src="fila.js"></script>
+<script>
+const url = FILA.urlPublica();
+document.getElementById('url').textContent = url;
+try{ new QRCode(document.getElementById('qr'), { text: url, width: 600, height: 600, correctLevel: QRCode.CorrectLevel.M }); }
+catch(e){ document.getElementById('qr').textContent = 'Sem internet para gerar o QR code.'; }
+</script>
+</body>
+</html>

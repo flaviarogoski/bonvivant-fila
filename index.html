@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#232321">
+<title>Fila Bon Vivant</title>
+<link rel="icon" href="logo.png">
+<link rel="stylesheet" href="fila.css">
+<style>
+main{max-width:440px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(32px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:18px}
+.logo{width:120px;height:auto;align-self:center}
+#tela{display:flex;flex-direction:column;gap:14px}
+@media (prefers-color-scheme:dark){.logo{filter:invert(1)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+h1{font-family:var(--f-marca);font-weight:700;font-size:1.5rem;line-height:1.2;margin:0;text-wrap:balance}
+p{margin:0}
+.sub{color:var(--muted)}
+form{display:flex;flex-direction:column;gap:14px}
+.senha-in{font-family:var(--f-marca);font-weight:700;font-size:2rem;text-align:center;letter-spacing:.05em}
+.centro{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+.rot{font-size:.8rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.minha{font-size:5.5rem}
+.frase{font-family:var(--f-marca);font-weight:700;font-size:1.45rem;line-height:1.2;text-wrap:balance}
+.faixa{border-radius:12px;padding:12px 14px;font-size:.95rem}
+.f-aviso{background:var(--aviso-soft);color:var(--aviso)}
+.f-ok{background:var(--ok-soft);color:var(--ok)}
+.f-vez{background:var(--vinho);color:var(--vinho-fg);text-align:center;font-family:var(--f-marca);font-weight:700;font-size:1.5rem;padding:18px}
+.agora{display:flex;justify-content:center;gap:24px;color:var(--muted);font-size:.95rem}
+.agora b{color:var(--ink);font-family:var(--f-marca);font-size:1.3rem}
+.priv{font-size:.78rem;color:var(--muted);text-align:center}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;font-weight:400;padding:4px;align-self:center}
+.pulsar{animation:pulsar 1.6s ease-in-out infinite}
+@keyframes pulsar{50%{transform:scale(1.04)}}
+@media (prefers-reduced-motion:reduce){.pulsar{animation:none}}
+</style>
+</head>
+<body>
+<div id="demo" class="demo" hidden>Modo demonstração: os dados ficam só neste aparelho.</div>
+<main>
+  <img class="logo" src="logo.png" alt="Bon Vivant em casa">
+  <div id="tela"></div>
+  <p class="priv">Seu celular é usado só para este aviso e é apagado em até 2 dias.</p>
+</main>
+
+<script src="config.js"></script>
+<script src="fila.js"></script>
+<script>
+const F = window.FILA, $ = id => document.getElementById(id);
+const TKEY = 'bvfila-token';
+const hoje = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+let timer = null, ultimoFrente = null, ultimoErro = '';
+if (F.DEMO) $('demo').hidden = false;
+
+function lerToken(){ try{ const t = JSON.parse(localStorage.getItem(TKEY)); return t && t.dia === hoje() ? t.token : null; }catch(e){ return null; } }
+function gravarToken(tok){ try{ localStorage.setItem(TKEY, JSON.stringify({ token: tok, dia: hoje() })); }catch(e){} }
+function apagarToken(){ try{ localStorage.removeItem(TKEY); }catch(e){} }
+
+function telaCadastro(msg){
+  clearInterval(timer); timer = null;
+  let nome = ''; try{ nome = localStorage.getItem('bvfila-nome') || ''; }catch(e){}
+  let tel = ''; try{ tel = localStorage.getItem('bvfila-tel') || ''; }catch(e){}
+  $('tela').innerHTML = `
+    <div class="card">
+      <h1>Avisamos no seu WhatsApp quando a sua vez estiver chegando</h1>
+      <p class="sub">Assim você pode circular pela loja sem perder a vez.</p>
+      ${msg ? `<div class="faixa f-aviso">${F.esc(msg)}</div>` : ''}
+      <form id="form" novalidate>
+        <label for="senha">Número da senha (está no papel)
+          <input id="senha" class="senha-in" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="00" required></label>
+        <label for="nome">Seu nome
+          <input id="nome" autocomplete="given-name" maxlength="40" value="${F.esc(nome)}" required></label>
+        <label for="tel">WhatsApp com DDD
+          <input id="tel" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="(41) 99999-0000" value="${F.esc(tel)}" required></label>
+        <p class="erro" id="erro" role="alert"></p>
+        <button class="b-principal" id="enviar" type="submit">Quero ser avisado</button>
+      </form>
+    </div>`;
+  $('form').onsubmit = enviar;
+}
+
+async function enviar(e){
+  e.preventDefault();
+  const senha = parseInt($('senha').value, 10), nome = $('nome').value.trim(), tel = $('tel').value;
+  if (isNaN(senha)) return erro('Digite o número da senha que está no papel.');
+  if (!nome) return erro('Digite o seu nome.');
+  if (!F.limpaTel(tel)) return erro('Confira o celular: DDD + número, ex.: (41) 99999-0000.');
+  $('enviar').disabled = true; $('enviar').textContent = 'Enviando…';
+  try{
+    const r = await F.rpc('fila_entrar', { p_senha: senha, p_nome: nome, p_tel: tel });
+    try{ localStorage.setItem('bvfila-nome', nome); localStorage.setItem('bvfila-tel', tel); }catch(e){}
+    gravarToken(r.token); acompanhar();
+  }catch(err){
+    erro(err.message); $('enviar').disabled = false; $('enviar').textContent = 'Quero ser avisado';
+  }
+}
+function erro(m){ $('erro').textContent = m; }
+
+function acompanhar(){
+  atualizar();
+  clearInterval(timer); timer = setInterval(atualizar, 5000);
+}
+
+async function atualizar(){
+  const tok = lerToken();
+  if (!tok) return telaCadastro();
+  let m;
+  try{ m = await F.rpc('fila_minha', { p_token: tok }); ultimoErro = ''; }
+  catch(err){ ultimoErro = err.message; const el = $('conexao'); if (el) el.textContent = err.message; return; }
+  if (!m || !m.hoje || m.status === 'removido'){ apagarToken(); return telaCadastro(); }
+
+  const vez = m.atual === m.senha;
+  const passou = m.status === 'atendido' && !vez;
+  const perto = !vez && !passou && m.frente <= m.aviso;
+  if (perto && ultimoFrente !== null && ultimoFrente > m.aviso && navigator.vibrate) navigator.vibrate([300, 150, 300]);
+  if (vez && ultimoFrente !== -1 && navigator.vibrate) navigator.vibrate([500, 200, 500]);
+  ultimoFrente = vez ? -1 : m.frente;
+
+  let corpo;
+  if (vez) corpo = `<div class="faixa f-vez pulsar">Chegou a sua vez! Venha até o balcão.</div>`;
+  else if (passou) corpo = `<div class="faixa f-aviso">A senha ${m.senha} já foi chamada. Se ainda não foi atendido, fale com o balcão.</div>`;
+  else corpo = `
+    <div class="frase">${m.frente === 0 ? 'A sua senha é a próxima!' : `Falta${m.frente > 1 ? 'm' : ''} ${F.pessoas(m.frente)} na sua frente`}</div>
+    ${m.status === 'avisado' ? `<div class="faixa f-ok">Mandamos o aviso no seu WhatsApp. Pode se aproximar do balcão.</div>`
+      : perto ? `<div class="faixa f-aviso">Está chegando! Já pode ir se aproximando do balcão.</div>`
+      : `<p class="sub">Quando faltarem ${F.pessoas(m.aviso)}, você recebe um WhatsApp.</p>`}`;
+
+  $('tela').innerHTML = `
+    <div class="card centro">
+      <span class="rot">${F.esc(m.nome)}, sua senha</span>
+      <span class="num minha">${m.senha}</span>
+      ${corpo}
+    </div>
+    <div class="agora"><span>Chamando agora <b>${m.atual}</b></span></div>
+    <p class="erro" id="conexao" style="text-align:center">${F.esc(ultimoErro)}</p>
+    <button class="link" id="outra">${passou || vez ? 'Cadastrar outra senha' : 'Cancelar aviso'}</button>`;
+  $('outra').onclick = async () => {
+    if (!passou && !vez){ try{ await F.rpc('fila_sair', { p_token: tok }); }catch(e){} }
+    apagarToken(); ultimoFrente = null; telaCadastro();
+  };
+}
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && lerToken()) atualizar(); });
+lerToken() ? acompanhar() : telaCadastro();
+</script>
+</body>
+</html>
